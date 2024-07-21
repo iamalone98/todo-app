@@ -3,15 +3,16 @@ package models
 import "time"
 
 type User struct {
-	Id        *int       `json:"id" db:"id"`
+	Id        *int       `json:"user_id" db:"user_id"`
 	Login     *string    `json:"login" db:"login"`
 	Password  *string    `json:"password" db:"password"`
 	CreatedAt *time.Time `json:"created_at" db:"created_at"`
 }
 
 type UserPublic struct {
-	Id    *int    `json:"id" db:"id"`
-	Login *string `json:"login" db:"login"`
+	Id        *int       `json:"user_id" db:"user_id"`
+	Login     *string    `json:"login" db:"login"`
+	CreatedAt *time.Time `json:"created_at" db:"created_at"`
 }
 
 type UserAuth struct {

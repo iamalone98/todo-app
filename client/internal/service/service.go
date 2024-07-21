@@ -1,6 +1,8 @@
 package service
 
-import "github.com/iamalone98/todo-app/internal/repository"
+import (
+	"github.com/iamalone98/todo-app/internal/repository"
+)
 
 type Service struct {
 	TodoService TodoService
@@ -8,8 +10,11 @@ type Service struct {
 }
 
 func NewService(r repository.Repository) Service {
+	userService := NewUserService(r.UserRepository)
+	todoService := NewTodoService(r.TodoRepository)
+
 	return Service{
-		TodoService: NewTodoService(r.TodoRepository),
-		UserService: NewUserService(r.UserRepository),
+		UserService: userService,
+		TodoService: todoService,
 	}
 }

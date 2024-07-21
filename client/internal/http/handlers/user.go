@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/iamalone98/todo-app/internal/http/helpers"
 	"github.com/iamalone98/todo-app/internal/service"
 	"github.com/iamalone98/todo-app/internal/utils"
 	"github.com/iamalone98/todo-app/models"
@@ -30,24 +31,24 @@ func (u user) Authorization(ctx *gin.Context) {
 	var user models.UserAuth
 
 	if err := ctx.ShouldBindJSON(&user); err != nil {
-		ctx.JSON(JSONErrorWrapper(http.StatusBadRequest, "Missing required params"))
+		ctx.JSON(helpers.JSONErrorWrapper(http.StatusBadRequest, "Missing required params"))
 		return
 	}
 
 	userData, err := u.s.Get(*user.Login)
 	if err != nil {
-		ctx.JSON(JSONErrorWrapper(http.StatusNotFound, "User not found"))
+		ctx.JSON(helpers.JSONErrorWrapper(http.StatusNotFound, "User not found"))
 		return
 	}
 
 	if err := utils.CheckHashPassword([]byte(*userData.Password), []byte(*user.Password)); err != nil {
-		ctx.JSON(JSONErrorWrapper(http.StatusUnauthorized, "Wrong password"))
+		ctx.JSON(helpers.JSONErrorWrapper(http.StatusUnauthorized, "Wrong password"))
 		return
 	}
 
-	token, err := GenerateJWTToken(*user.Login)
+	token, err := helpers.GenerateJWTToken(*userData.Id, *user.Login)
 	if err != nil {
-		ctx.JSON(JSONErrorWrapper(http.StatusInternalServerError, "Error create token"))
+		ctx.JSON(helpers.JSONErrorWrapper(http.StatusInternalServerError, "Error create token"))
 		return
 	}
 
@@ -58,28 +59,28 @@ func (u user) Registration(ctx *gin.Context) {
 	var user models.UserAuth
 
 	if err := ctx.ShouldBindJSON(&user); err != nil {
-		ctx.JSON(JSONErrorWrapper(http.StatusBadRequest, "Missing required params"))
+		ctx.JSON(helpers.JSONErrorWrapper(http.StatusBadRequest, "Missing required params"))
 		return
 	}
 
 	if len(*user.Password) < 8 {
-		ctx.JSON(JSONErrorWrapper(http.StatusBadRequest, "Min password length 8"))
+		ctx.JSON(helpers.JSONErrorWrapper(http.StatusBadRequest, "Min password length 8"))
 		return
 	}
 
-	err := u.s.Create(user)
+	newUser, err := u.s.Create(user)
 	if err != nil && strings.Contains(err.Error(), "duplicate key value") {
 		if strings.Contains(err.Error(), "duplicate key value") {
-			ctx.JSON(JSONErrorWrapper(http.StatusConflict, "This login is already taken"))
+			ctx.JSON(helpers.JSONErrorWrapper(http.StatusConflict, "This login is already taken"))
 			return
 		}
 
-		ctx.JSON(JSONErrorWrapper(http.StatusInternalServerError, "Unknown error"))
+		ctx.JSON(helpers.JSONErrorWrapper(http.StatusInternalServerError, "Unknown error"))
 	}
 
-	token, err := GenerateJWTToken(*user.Login)
+	token, err := helpers.GenerateJWTToken(*newUser.Id, *newUser.Login)
 	if err != nil {
-		ctx.JSON(JSONErrorWrapper(http.StatusInternalServerError, "Error create token"))
+		ctx.JSON(helpers.JSONErrorWrapper(http.StatusInternalServerError, "Error create token"))
 		return
 	}
 

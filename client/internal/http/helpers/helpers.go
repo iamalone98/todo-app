@@ -1,4 +1,4 @@
-package handlers
+package helpers
 
 import (
 	"errors"
@@ -10,6 +10,7 @@ import (
 )
 
 type Claims struct {
+	Id    int    `json:"user_id"`
 	Login string `json:"login"`
 	jwt.StandardClaims
 }
@@ -23,8 +24,9 @@ func JSONErrorWrapper(statusCode int, message string) (int, map[string]any) {
 	}
 }
 
-func GenerateJWTToken(login string) (string, error) {
+func GenerateJWTToken(id int, login string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{
+		Id:    id,
 		Login: login,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(time.Hour * 24).Unix(),

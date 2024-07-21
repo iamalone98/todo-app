@@ -6,8 +6,9 @@ import (
 )
 
 type UserRepository interface {
-	Create(user models.UserAuth) error
+	Create(user models.UserAuth) (*models.UserPublic, error)
 	Get(login string) (*models.User, error)
+	GetById(id int) (*models.User, error)
 }
 
 type userRepository struct {
@@ -20,18 +21,30 @@ func NewUserRepository(db *db.Storage) UserRepository {
 	}
 }
 
-func (u userRepository) Create(user models.UserAuth) error {
-	if _, err := u.db.DB.Exec("INSERT INTO users (login, password, created_at) VALUES ($1, $2, CURRENT_TIMESTAMP)", user.Login, user.Password); err != nil {
-		return err
+func (u userRepository) Create(user models.UserAuth) (*models.UserPublic, error) {
+	userRet := models.UserPublic{}
+
+	if err := u.db.DB.QueryRow("INSERT INTO users (login, password, created_at) VALUES ($1, $2, current_timestamp) RETURNING user_id, login, created_at", user.Login, user.Password).Scan(&userRet.Id, &userRet.Login, &userRet.CreatedAt); err != nil {
+		return nil, err
 	}
 
-	return nil
+	return &userRet, nil
 }
 
 func (u userRepository) Get(login string) (*models.User, error) {
 	user := models.User{}
 
 	if err := u.db.DB.QueryRow("SELECT * FROM users WHERE login = $1", login).Scan(&user.Id, &user.Login, &user.Password, &user.CreatedAt); err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+func (u userRepository) GetById(id int) (*models.User, error) {
+	user := models.User{}
+
+	if err := u.db.DB.QueryRow("SELECT * FROM users WHERE id = $1", id).Scan(&user.Id, &user.Login, &user.Password, &user.CreatedAt); err != nil {
 		return nil, err
 	}
 
